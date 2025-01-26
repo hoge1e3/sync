@@ -23,7 +23,7 @@ export async function main(this:Shell, cmd:string, ...args:string[]){
             await checkout(gd());
             return await commit(gd());
         case "branch":
-            return await branch(gd(), a());
+            return await branch(a(), gd());
         default:
             sh.echo("sync init/clone/checkout/commit");
     }

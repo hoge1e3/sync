@@ -1,7 +1,7 @@
 // acepad-store
 
-import { Data, NoIdData } from "./store-file";
-export {setFS} from "./store-file";
+import { Data, NoIdData } from "./store-file.js";
+export {setFS} from "./store-file.js";
 type PostResponse={id:string};
 const hashurl=process.env["STORE_URL"]!;
 if (!hashurl) throw new Error("environment variable 'STORE_URL' not set");

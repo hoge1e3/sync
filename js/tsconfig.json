@@ -13,8 +13,8 @@
       "declaration": true,
       // 厳密モードとして設定
       "strict": true,
-      "allowSyntheticDefaultImports": true
-      //"outDir":"./js"
+      "allowSyntheticDefaultImports": true,
+      "outDir":"./js"
     },
     "include": ["src","test"]
   }

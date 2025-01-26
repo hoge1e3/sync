@@ -1,4 +1,20 @@
 {
+  "name": "sync",
+  "version": "1.0.0",
+  "main": "sync.js",
+  "bin": {
+    "sync":"./js/cmd"
+  },
+  "type": "module",
+  "types": "./js/sync.d.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["file","synchronization"],
+  "author": "@hoge1e3",
+  "license": "MIT",
+  "description": "File synchronization",
   "dependencies": {
     "@hoge1e3/sfile": "^1.1.2",
     "@types/chai": "^5.0.1",
