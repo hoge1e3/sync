@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@hoge1e3/sfile": "^1.1.2",
+    "@types/chai": "^5.0.1",
+    "chai": "^5.1.2",
+    "jszip": "^3.10.1"
+  }
+}
