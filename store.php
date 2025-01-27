@@ -1,13 +1,15 @@
 <?php
 require_once(__DIR__."/config/config.php");
+//print_r($_POST["data"]);
 try {
-    if (isset($_GET["apikey"])) allowOrigin($_GET["apikey"]);
-    else if (isset($_POST["apikey"])) allowOrigin($_POST["apikey"]);
+    if (param("apikey",null)) allowOrigin(param("apikey"));
     if (isset($_POST["data"])) put();
     else if (isset($_GET["clean"])) clean();
     else get();
 } catch (Exception $e) {
     http_response_code(500);
+    $e->data["trace"]=$e->getTraceAsString();//$lines;
+    $e->data["params"]=get_and_post_params();
     header("Content-type: text/json; charset=utf8");
     print(json_encode($e->data));
 }
@@ -46,9 +48,8 @@ function get() {
     if (isset($_GET["key"])) {
         $id=kvs_get($_GET["key"])->head;
     } else {
-        $id=$_GET["id"];
+        $id=param("id");
     }
-    if(!$id) throw error("ID not set");
     $data=data_get($id);
     header("Content-type: text/json; charset=utf8");
     print(json_encode($data));
@@ -118,7 +119,9 @@ function kvs_put($key, $value, $config=null) {
     if (kvs_exists($key)) {
         $k=kvs_get($key);
         $ph=$k->head;
-        if (!isset($value->__prev__)) {
+        if ($ph===null) {
+            // OK
+        } else if (!isset($value->__prev__)) {
             throw error(["status"=>"prev_not_set","message"=>"prev is not set"]);
         } else if ($value->__prev__!==$ph) {
             throw error(["status"=>"prev_not_match","__prev__"=>$value->__prev__]);
@@ -137,7 +140,7 @@ function clean() {
     $all=0;
     foreach (glob(DATA."/*") as $d) {
         $t=time()-filemtime($d);
-        //$s=filesize($d);
+        $s=filesize($d);
         $e=$t;//*$s;
         //print "$d\t$e\t$t\t$s\n";
         $ent[]=[$d, $e, $t, $s];
@@ -175,4 +178,15 @@ function moveFileToFolder($fileName, $folderPath) {
     $oldFilePath = $fileName;
     $newFilePath = rtrim($folderPath, '/') . '/' . basename($fileName);
     return rename($oldFilePath, $newFilePath);
+}
+function param() {
+    $a=func_get_args();
+    $key=$a[0];
+    if (isset($_POST[$key])) return $_POST[$key];
+    if (isset($_GET[$key])) return $_GET[$key];
+    if (count($a)===1) throw error(["status"=>"parameter_required","message"=>"parameter required: $key","key"=>$key]);
+    return $a[1];
+}
+function get_and_post_params() {
+    return $_REQUEST;//["get"=>$_GET,"post"=>$_POST]; 
 }

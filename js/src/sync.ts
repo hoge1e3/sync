@@ -8,26 +8,26 @@ import * as assert from "assert";
 import {instance,find,conflictFile, WorkDirStatus} from "./dot-sync.js";
 import { SFile } from "@hoge1e3/sfile";
 import { zip } from "./zip.js";
-export async function init(name:string,dir:SFile,data={} as Data){
-    let co=await store.init(name,data);
+export async function init(dir:SFile,data={} as Data){
+    let co=await store.init(data);
     const __id__=co.data.__id__;
     const info=instance(dir);
-    info.init({name,__id__});
+    info.init({name:co.branch,__id__});
     return __id__;
 }
-export async function branch(newname:string, dir:SFile) {
+export async function branch(dir:SFile) {
     const info=instance(dir);
     const {__id__}=info.readLocal();
     let data=await dir2data(dir,{excludes:info.getExcludes()});
     data.__prev__=__id__;
     validate(data,true);
-    let nid=await store.init(newname, data);
+    let nco=await store.init(data);
     info.writeLocal({
-        __id__:nid.data.__id__,
+        __id__:nco.data.__id__,
         tree:info.getLocalTree2(),
     });
-    info.branch(newname);
-    return nid.data.__id__;
+    info.branch(nco.branch);
+    return nco.data.__id__;
 }
 export async function clone(name:string,dir:SFile){
     if(dir.ls().length)throw new Error("not empty");

@@ -16,22 +16,28 @@ async function $get(data = {}) {
         method: 'GET',
     });
     if (!response.ok) {
+        await showResponseBody(response);
         throw new Error(`HTTP error! Status: ${response.status}`);
     }
     return await response.json();
 }
-
+async function showResponseBody(response:Response){
+    console.log(await response.text());
+}
 // $.post implementation using async/await
 async function $post(data = {}) {
     const url=hashurl;
+    const queryString = new URLSearchParams({...opt,...data}).toString();
+    //console.log("post",queryString);
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded', // Specify the content type
         },
-        body: JSON.stringify({...opt, ...data}),
+        body: queryString,// JSON.stringify({...opt, ...data}),
     });
     if (!response.ok) {
+        await showResponseBody(response);
         throw new Error(`HTTP error! Status: ${response.status}`);
     }
     return await response.json();
@@ -46,14 +52,16 @@ export async function put(data:NoIdData) {
 export async function get(id:string):Promise<Data> {
     return await $get({id}) as Data;
 }
-export async function init(branch:string,data={}) {
-    await $post({
-        key:branch,
+export async function init(data={}) {
+    const r:any=await $post({
+        key:"new",
         data:JSON.stringify(data),
     });
-    return await checkout(branch);
+    console.log("init",r);
+    return await checkout(r.key);
 }
 export type Checkout={
+    branch:string,
     data:Data,
     commit(data:NoIdData):Promise<Checkout>;
 };
@@ -67,6 +75,7 @@ export async function checkout(branch:string, _data?:Data):Promise<Checkout> {
     const head=data.__id__;
     return {
         data,
+        branch,
         async commit(data:Data) {
             data.__prev__=head;
             let r:any=await $post({

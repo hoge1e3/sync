@@ -12,7 +12,7 @@ export async function main(this:Shell, cmd:string, ...args:string[]){
     };
     switch(cmd||"auto") {
         case "init":
-            return await init(a(),gd());
+            return await init(gd());
         case "checkout":
             return await checkout(gd());
         case "commit":
@@ -23,7 +23,7 @@ export async function main(this:Shell, cmd:string, ...args:string[]){
             await checkout(gd());
             return await commit(gd());
         case "branch":
-            return await branch(a(), gd());
+            return await branch(gd());
         default:
             sh.echo("sync init/clone/checkout/commit");
     }

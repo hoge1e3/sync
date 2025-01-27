@@ -6,4 +6,5 @@ import { setFS } from "./store-file.js";
 const FS=await getNodeFS();
 setFS(FS);
 const shell=new Shell(process.cwd(),FS);
-main.call(shell, ...process.argv);
+//console.log("process.argv",process.argv);
+main.call(shell, ...process.argv.slice(2));
