@@ -3,13 +3,23 @@
 import { Data, NoIdData } from "./store-file.js";
 export {setFS} from "./store-file.js";
 type PostResponse={id:string};
-const hashurl=process.env["STORE_URL"]!;
-if (!hashurl) throw new Error("environment variable 'STORE_URL' not set");
-const apikey=process.env["STORE_KEY"];
-const opt:any=apikey?{apikey}:{};
-// $.get implementation using async/await
-async function $get(data = {}) {
-    const url=hashurl;
+function getHashurl() {
+    const hashurl=process.env["STORE_URL"]!;
+    if (!hashurl) throw new Error("environment variable 'STORE_URL' not set");
+    return hashurl;
+}
+function getApikey() {
+    const apikey=process.env["STORE_KEY"];
+    return apikey;
+}
+function getOpt() {
+    const apikey=getApikey();
+    const opt:any=apikey?{apikey}:{};
+    return opt;
+}
+export async function $get(data = {}) {
+    const url=getHashurl();
+    const opt=getOpt();
     const queryString = new URLSearchParams({...opt,...data}).toString();
     const fetchUrl = queryString ? `${url}?${queryString}` : url;
     const response = await fetch(fetchUrl, {
@@ -24,9 +34,9 @@ async function $get(data = {}) {
 async function showResponseBody(response:Response){
     console.log(await response.text());
 }
-// $.post implementation using async/await
-async function $post(data = {}) {
-    const url=hashurl;
+export async function $post(data = {}) {
+    const url=getHashurl();
+    const opt=getOpt();
     const queryString = new URLSearchParams({...opt,...data}).toString();
     //console.log("post",queryString);
     const response = await fetch(url, {

@@ -5,6 +5,7 @@ try {
     if (param("apikey",null)) allowOrigin(param("apikey"));
     if (isset($_POST["data"])) put();
     else if (isset($_GET["clean"])) clean();
+    else if (isset($_GET["chain"])) chain();
     else get();
 } catch (Exception $e) {
     http_response_code(500);
@@ -53,6 +54,18 @@ function get() {
     $data=data_get($id);
     header("Content-type: text/json; charset=utf8");
     print(json_encode($data));
+}
+function chain() {  
+    $id=param("chain");
+    $data=data_get($id);
+    $res=[];
+    for ($i=0;$i<32;$i++) {
+        $res[]=$data->__id__;
+        if (!isset($data->__prev__)) break;
+        $data=data_get($data->__prev__);
+    }
+    header("Content-type: text/json; charset=utf8");
+    print(json_encode($res));
 }
 function data_file($id){
     return DATA."/$id";

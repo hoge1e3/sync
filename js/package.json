@@ -1,9 +1,9 @@
 {
   "name": "sync",
   "version": "1.0.0",
-  "main": "sync.js",
+  "main": "./js/sync.js",
   "bin": {
-    "sync": "./js/cmd"
+    "sync": "./js/sync"
   },
   "type": "module",
   "types": "./js/sync.d.ts",

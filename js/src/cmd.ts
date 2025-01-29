@@ -1,6 +1,6 @@
 #!node
 import { Shell } from "./shell.js";
-import {init,commit,checkout,clone,branch} from "./sync.js";
+import {init,commit,checkout,clone,branch,downloadZip, chain} from "./sync.js";
 
 export async function main(this:Shell, cmd:string, ...args:string[]){
     const sh=this;
@@ -24,6 +24,10 @@ export async function main(this:Shell, cmd:string, ...args:string[]){
             return await commit(gd());
         case "branch":
             return await branch(gd());
+        case "zip":
+            return await downloadZip(sh.resolve(sh.cwd), a());
+        case "chain":
+            return console.log(await chain(a()));
         default:
             sh.echo("sync init/clone/checkout/commit");
     }

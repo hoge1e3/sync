@@ -29,6 +29,17 @@ export async function branch(dir:SFile) {
     info.branch(nco.branch);
     return nco.data.__id__;
 }
+export async function downloadZip(dir:SFile,id:string){
+    let data=await store.get(id);
+    let zipFile=data2zip(data);
+    const dst=dir.rel(zipFile.name());
+    zipFile.moveTo(dst);
+    console.log("zipped to "+dst.path());
+}
+export async function chain(id:string){
+    return store.$get({chain:id});
+}
+
 export async function clone(name:string,dir:SFile){
     if(dir.ls().length)throw new Error("not empty");
     let co=await store.checkout(name);
