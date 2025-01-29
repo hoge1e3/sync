@@ -57,7 +57,7 @@ export async function data2dir(data:Data):Promise<SFile>{
     await zip.unzip(zipFile,extracted,{overwrite:true});
     return extracted;
 }
-export async function dir2data(dir:SFile,opt={}):Promise<NoIdData>{
+export async function dir2data(dir:SFile,opt:{excludes:(f:SFile)=>boolean}):Promise<NoIdData>{
     let ram=FS.get(tmpath);    
     let n=Math.floor(Math.random()*100000);
     let zipFile=ram.rel(n+".zip");

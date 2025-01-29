@@ -18,7 +18,7 @@ export type Status = {
 };
 export class zip {
     static async zip(dir:SFile, dstZip:SFile, options:CreateZipOptions):Promise<void> {
-        console.log("zip", options);
+        //console.log("zip", options);
         /*let dstZip:SFile;
         let options = {} as CreateZipOptions;
         if (SFile.is(a)) {
@@ -34,6 +34,8 @@ export class zip {
             return new Date(f.lastUpdate() - new Date().getTimezoneOffset() * 60 * 1000);
         }
         async function loop(dst:JSZip, dir:SFile) {
+            //console.log("loop",dir.path(), options);
+            if (dir.path().includes("node_modules")) throw new Error("ERA!");
             for (let f of dir.listFiles({ ...options, cache: true })) {
                 if (options.progress) {
                     await options.progress(f);

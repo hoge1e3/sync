@@ -44,7 +44,7 @@ export type WorkDir={
     treef:SFile,
     dir:SFile,
     sync:SFile,
-    getExcludes():string[],
+    getExcludes():(f:SFile)=>boolean,
     getLocalTree2():DirInfos,
     getLocalTree1():DirInfos,
     updateTree():void,
@@ -74,13 +74,15 @@ export function instance(dir: SFile):WorkDir{
         dir,
         sync,
         getExcludes(){
-            return [".sync/", ...(
+            const truncSEP=((s:string)=>s.replace(/\/$/,""));
+            const excludePaths=[".sync/", ...(
                 this.getConfig().excludes||[]
             ), ...(
                 syncignore.exists()?
                     syncignore.lines().filter(e=>e)
                 :[]
-            )];
+            )].map(truncSEP);
+            return (f:SFile)=>excludePaths.some(e=>truncSEP(f.relPath(dir))==e);
         },
         getLocalTree2(){//local of current
             return this.getDirInfo() as DirInfos;
