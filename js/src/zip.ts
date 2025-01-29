@@ -18,6 +18,7 @@ export type Status = {
 };
 export class zip {
     static async zip(dir:SFile, dstZip:SFile, options:CreateZipOptions):Promise<void> {
+        console.log("zip", options);
         /*let dstZip:SFile;
         let options = {} as CreateZipOptions;
         if (SFile.is(a)) {

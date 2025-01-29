@@ -9,7 +9,7 @@ try {
 } catch (Exception $e) {
     http_response_code(500);
     $e->data["trace"]=$e->getTraceAsString();//$lines;
-    $e->data["params"]=get_and_post_params();
+    //$e->data["params"]=get_and_post_params();
     header("Content-type: text/json; charset=utf8");
     print(json_encode($e->data));
 }

@@ -17,10 +17,10 @@ export function validate(data:NoIdData, allownoid:true):NoIdData;
 export function validate(data:Data):Data;
 export function validate(data:NoIdData|Data, allownoid:boolean=false){
     if((!allownoid &&!(data as Data).__id__) || !data.url){
-        console.log("data",data);
+        //console.log("data",data);
         throw new Error("no __id__ or url "+allownoid);
     }
-    console.log("datavalid",data);
+    //console.log("datavalid",data);
     return data;
 }
 export async function put(src:SFile){

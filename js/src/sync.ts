@@ -4,7 +4,7 @@ dir2data,validate,get as sget,
 Data} from "./store-file.js";
 import {getDelta,getDeltaDelta} from "./delta.js";
 //import {FS} from "@hoge1e3/fs";
-import * as assert from "assert";
+import {assert} from "chai";
 import {instance,find,conflictFile, WorkDirStatus} from "./dot-sync.js";
 import { SFile } from "@hoge1e3/sfile";
 import { zip } from "./zip.js";
@@ -50,14 +50,14 @@ export async function checkout(_dir:SFile){
     __id__=rmtco.data.__id__;
     let {tree:rmtree,dir:rmtdir}=await data2tree(rmtco.data,info);
     assert.ok(rmtree,"rmtree");
-    console.log("rmtree",rmtree, "dir",dir);
+    //console.log("rmtree",rmtree, "dir",dir);
     let lcltree2=info.getLocalTree2();
     //console.log("lcltree2",lcltree2);
     let ldelta=getDelta(lcltree1, lcltree2);
     let rdelta=getDelta(lcltree1, rmtree);
     let dd=getDeltaDelta(ldelta,rdelta);
     console.log("remote id",__id__);
-    console.log("dd",dd);
+    //console.log("dd",dd);
     for (let k in dd.downloads) {
         let d=dd.downloads[k];
         let f=dir.rel(k);//.rm();
