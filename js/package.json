@@ -1,9 +1,9 @@
 {
-  "name": "sync",
+  "name": "@hoge1e3/psync",
   "version": "1.0.0",
   "main": "./js/sync.js",
   "bin": {
-    "sync": "./js/sync"
+    "psync": "./js/sync"
   },
   "type": "module",
   "types": "./js/sync.d.ts",

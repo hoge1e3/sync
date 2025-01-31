@@ -15,6 +15,9 @@ export async function init(dir:SFile,data={} as Data){
     info.init({name:co.branch,__id__});
     return __id__;
 }
+export function getBranchName(dir:SFile) {
+    return instance(dir).readRepo().name;
+}
 export async function branch(dir:SFile) {
     const info=instance(dir);
     const {__id__}=info.readLocal();
@@ -141,7 +144,7 @@ export async function commit(_dir:SFile){
 export async function data2tree(data:Data ,info: WorkDirStatus){
     let dir=await data2dir(data);
     let tree=info.getDirInfo(dir);
-    console.log("data2tree", tree);
+    //console.log("data2tree", tree);
     if (!tree) {
         console.log("data", data);
         console.log("ext", dir.path());

@@ -118,7 +118,7 @@ function kvs_get($key) {
 }
 function kvs_new() {
     do{
-        $key=makeHash(microtime().rand());
+        $key="B_".makeHash(microtime().rand());
     } while (kvs_exists($key));
     $k=new stdClass;
     $k->head=null;
