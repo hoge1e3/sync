@@ -131,6 +131,9 @@ export async function commit(_dir:SFile){
         console.log("cof",rmtco.data.__id__, __id__);
         throw new Error("checkout first.");
     }
+    for (let k in ldelta) {
+        console.log("commit",k);
+    }
     let data=await dir2data(dir,{excludes:info.getExcludes()});
     data.__prev__=__id__;
     validate(data,true);

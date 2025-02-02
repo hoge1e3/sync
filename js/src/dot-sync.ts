@@ -78,11 +78,10 @@ export function instance(dir: SFile):WorkDir{
             const excludePaths=[".sync/", ...(
                 this.getConfig().excludes||[]
             ), ...(
-                syncignore.exists()?
-                    syncignore.lines().filter(e=>e)
-                :[]
+                syncignore.exists()?syncignore.lines():[]
             )].map(truncSEP);
-            return (f:SFile)=>excludePaths.some(e=>truncSEP(f.relPath(dir))==e);
+            const hasSync=(f:SFile)=>f.isDir() && f.rel(".sync/").exists();
+            return (f:SFile)=>hasSync(f)||excludePaths.some(e=>truncSEP(f.relPath(dir))==e);
         },
         getLocalTree2(){//local of current
             return this.getDirInfo() as DirInfos;
