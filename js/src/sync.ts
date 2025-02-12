@@ -3,11 +3,14 @@ import {data2zip,zip2data,data2dir,
 dir2data,validate,get as sget,
 Data} from "./store-file.js";
 import {getDelta,getDeltaDelta} from "./delta.js";
+export {getDelta,getDeltaDelta} from "./delta.js";
 //import {FS} from "@hoge1e3/fs";
 import {assert} from "chai";
 import {instance,find,conflictFile, WorkDirStatus} from "./dot-sync.js";
 import { SFile } from "@hoge1e3/sfile";
 import { zip } from "./zip.js";
+export { head } from "./store.js";
+export {setFS} from "./store-file.js";
 export async function init(dir:SFile,data={} as Data){
     let co=await store.init(data);
     const __id__=co.data.__id__;
@@ -38,9 +41,10 @@ export async function downloadZip(dir:SFile,id:string){
     const dst=dir.rel(zipFile.name());
     zipFile.moveTo(dst);
     console.log("zipped to "+dst.path());
+    return dst;
 }
 export async function chain(id:string){
-    return store.$get({chain:id});
+    return await store.$get({chain:id}) as string[];
 }
 
 export async function clone(name:string,dir:SFile){

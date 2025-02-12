@@ -35,7 +35,7 @@ export class zip {
         }
         async function loop(dst:JSZip, dir:SFile) {
             //console.log("loop",dir.path(), options);
-            if (dir.path().includes("node_modules")) throw new Error("ERA!");
+            //if (dir.path().includes("node_modules")) throw new Error("ERA!");
             for (let f of dir.listFiles({ ...options, cache: true })) {
                 if (options.progress) {
                     await options.progress(f);

@@ -1,5 +1,6 @@
 // acepad-store
 
+import exp from "constants";
 import { Data, NoIdData } from "./store-file.js";
 export {setFS} from "./store-file.js";
 type PostResponse={id:string};
@@ -75,12 +76,12 @@ export type Checkout={
     data:Data,
     commit(data:NoIdData):Promise<Checkout>;
 };
+export async function head(branch:string){
+    const data=await $get({key:branch}) as Data;
+    const head=data.__id__;
+    return head;
+}
 export async function checkout(branch:string, _data?:Data):Promise<Checkout> {
-    /*let data;
-    if(typeof _data==="object") data=_data;
-    else if(typeof _data==="string") data={__id__:_data};
-    else data=await $get({key:branch}) as Data;
-    let head=data.__id__;*/
     const data=_data || await $get({key:branch}) as Data;
     const head=data.__id__;
     return {

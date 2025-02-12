@@ -73,6 +73,9 @@ export function instance(dir: SFile):WorkDir{
         repof,treef,
         dir,
         sync,
+        isSubSync(f:SFile){
+            return !f.equals(dir) && f.isDir() && f.rel(".sync/").exists();
+        },
         getExcludes(){
             const truncSEP=((s:string)=>s.replace(/\/$/,""));
             const excludePaths=[".sync/", ...(
@@ -80,7 +83,7 @@ export function instance(dir: SFile):WorkDir{
             ), ...(
                 syncignore.exists()?syncignore.lines():[]
             )].map(truncSEP);
-            const hasSync=(f:SFile)=>f.isDir() && f.rel(".sync/").exists();
+            const hasSync=(f:SFile)=>this.isSubSync(f);
             return (f:SFile)=>hasSync(f)||excludePaths.some(e=>truncSEP(f.relPath(dir))==e);
         },
         getLocalTree2(){//local of current
