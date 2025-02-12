@@ -1,6 +1,6 @@
 {
   "name": "@hoge1e3/psync",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./js/sync.js",
   "bin": {
     "psync": "./js/sync"
