@@ -6,11 +6,15 @@ import {getDelta,getDeltaDelta} from "./delta.js";
 export {getDelta,getDeltaDelta} from "./delta.js";
 //import {FS} from "@hoge1e3/fs";
 import {assert} from "chai";
-import {instance,find,conflictFile, WorkDirStatus} from "./dot-sync.js";
+import {instance,find,conflictFile, WorkDirStatus, DirTree} from "./dot-sync.js";
 import { SFile } from "@hoge1e3/sfile";
 import { zip } from "./zip.js";
 export { head } from "./store.js";
 export {setFS} from "./store-file.js";
+export type TemporalRemoteDir={
+    dir:SFile,
+    tree:DirTree,
+};
 export async function init(dir:SFile,data={} as Data){
     let co=await store.init(data);
     const __id__=co.data.__id__;
@@ -23,14 +27,14 @@ export function getBranchName(dir:SFile) {
 }
 export async function branch(dir:SFile) {
     const info=instance(dir);
-    const {__id__}=info.readLocal();
+    const {__id__}=info.readTreeFile();
     let data=await dir2data(dir,{excludes:info.getExcludes()});
     data.__prev__=__id__;
     validate(data,true);
     let nco=await store.init(data);
-    info.writeLocal({
+    info.writeTreeFile({
         __id__:nco.data.__id__,
-        tree:info.getLocalTree2(),
+        tree:info.getWorkingTree(),
     });
     info.branch(nco.branch);
     return nco.data.__id__;
@@ -59,58 +63,61 @@ export async function clone(name:string,dir:SFile){
     return __id__;
 }
 export async function checkout(_dir:SFile){
-    let info=find(_dir);
-    let {dir,sync,lcltree1,__id__}=info;
-    let rmtco=await get_rmtco(info);
-    if (rmtco.data.__id__===__id__){
+    let workDirStat=find(_dir);
+    //const dir=workDirStat.dir;
+    let rmtco=await getRemoteLatestCheckout(workDirStat);
+    if (rmtco.data.__id__===workDirStat.__id__){
         return "up2date";
     }
-    __id__=rmtco.data.__id__;
-    let {tree:rmtree,dir:rmtdir}=await data2tree(rmtco.data,info);
-    assert.ok(rmtree,"rmtree");
+    //let {tree:treeOfRemote,dir:rmtdir}
+    const remoteTree=await data2tree(rmtco.data,workDirStat);
+    const treeOfRemote=remoteTree.tree;
+    assert.ok(treeOfRemote,"rmtree");
     //console.log("rmtree",rmtree, "dir",dir);
-    let lcltree2=info.getLocalTree2();
+    let treeOfWork=workDirStat.getWorkingTree();
     //console.log("lcltree2",lcltree2);
-    let ldelta=getDelta(lcltree1, lcltree2);
-    let rdelta=getDelta(lcltree1, rmtree);
+    const treeOfLastCommit=workDirStat.treeOfLastCommit;
+    let ldelta=getDelta(treeOfLastCommit, treeOfWork);
+    let rdelta=getDelta(treeOfLastCommit, treeOfRemote);
     let dd=getDeltaDelta(ldelta,rdelta);
-    console.log("remote id",__id__);
+    const remoteId=rmtco.data.__id__;
+    console.log("remote id",remoteId);
     //console.log("dd",dd);
     for (let k in dd.downloads) {
         let d=dd.downloads[k];
-        let f=dir.rel(k);//.rm();
+        let f=workDirStat.dir.rel(k);//.rm();
         if (d.deleted) {
             console.log("del",f.path());
             f.rm();
         } else {
             console.log("wrt",f.path());
-            let r=rmtdir.rel(k);
+            let r=remoteTree.dir.rel(k);
             r.copyTo(f);
             f.setMetaInfo(r.getMetaInfo());
         }
     }
     let cfiles=[], emesg="";
     for (let k in dd.conflicts) {
-        let f=dir.rel(k);
-        let rmtf=rmtdir.rel(k);
+        let wrkf=workDirStat.dir.rel(k);
+        let rmtf=remoteTree.dir.rel(k);
         if(!rmtf.exists())continue;
-        if(f.exists()&&rmtf.text()===f.text()){
+        if(wrkf.exists()&&rmtf.text()===wrkf.text()){
             continue;
         }
-        let cf=conflictFile(f, __id__);
+        let cf=conflictFile(wrkf, remoteId);
         emesg+=("Conflict: "+k+"\n");
         emesg+=("Saved to "+cf.name()+"\n");
         rmtf.copyTo(cf);
-        cfiles.push({src:f, dst:cf});
+        cfiles.push({src:wrkf, dst:cf});
     }
-    info.writeLocal({
-        __id__,
-        tree:rmtree,//getDirInfo(dir),
+    workDirStat.writeTreeFile({
+        __id__: remoteId,
+        tree:treeOfRemote,//getDirInfo(dir),
     });
     if (cfiles.length) {
-        throw new ConfilictError(emesg, cfiles, __id__);
+        throw new ConfilictError(emesg, cfiles, remoteId);
     }
-    return __id__;
+    return remoteId;
 }
 export class ConfilictError extends Error{
     constructor(
@@ -121,36 +128,39 @@ export class ConfilictError extends Error{
     }
 }
 export async function commit(_dir:SFile){
-    let info=find(_dir);
-    let {dir,sync,__id__,lcltree1,name}=info;
-    let lcltree2=info.getLocalTree2();
+    let workDirStat=find(_dir);
+    //let {dir,__id__,treeOfLastCommit}=workDirInfo;
+    let workTree=workDirStat.getWorkingTree(true);
     //console.log("lcltree2",lcltree2);
-    let ldelta=getDelta(lcltree1, lcltree2);
+    let ldelta=getDelta(workDirStat.treeOfLastCommit, workTree);
     if(Object.keys(ldelta).length==0){
         console.log("nothing changed.");
-        return __id__;
+        return workDirStat.__id__;
     }
-    let rmtco=await get_rmtco(info);
-    if (rmtco.data.__id__!==__id__){
-        console.log("cof",rmtco.data.__id__, __id__);
+    let rmtco=await getRemoteLatestCheckout(workDirStat);
+    if (rmtco.data.__id__!==workDirStat.__id__){
+        console.log("cof",rmtco.data.__id__, workDirStat.__id__);
         throw new Error("checkout first.");
     }
     for (let k in ldelta) {
         console.log("commit",k);
     }
-    let data=await dir2data(dir,{excludes:info.getExcludes()});
-    data.__prev__=__id__;
-    validate(data,true);
-    let nid=await rmtco.commit(data);
-    info.writeLocal({
-        __id__:nid.data.__id__,
-        tree:info.getLocalTree2(),
+    const newData=await dir2data(workDirStat.dir,{
+        excludes:workDirStat.getExcludes()
     });
-    return nid.data.__id__;
+    newData.__prev__=workDirStat.__id__;
+    validate(newData,true);
+    let newID=await rmtco.commit(newData);
+    workDirStat.writeTreeFile({
+        __id__:newID.data.__id__,
+        tree:workTree,//workDirStat.getWorkingTree(),
+    });
+    return newID.data.__id__;
 }
-export async function data2tree(data:Data ,info: WorkDirStatus){
+export async function data2tree(data:Data ,info: WorkDirStatus):Promise<TemporalRemoteDir>{
     let dir=await data2dir(data);
-    let tree=info.getDirInfo(dir);
+    const tmpWorks=find(dir);
+    let tree=tmpWorks.getWorkingTree();//.getDirTree(dir);
     //console.log("data2tree", tree);
     if (!tree) {
         console.log("data", data);
@@ -159,9 +169,9 @@ export async function data2tree(data:Data ,info: WorkDirStatus){
     }
     return {dir, tree};
 }
-async function get_rmtco(info: WorkDirStatus){
-    info.rmtco=info.rmtco||await store.checkout(info.name);
-    return info.rmtco;
+async function getRemoteLatestCheckout(workDirStat: WorkDirStatus){
+    workDirStat.rmtco=workDirStat.rmtco||await store.checkout(workDirStat.name);
+    return workDirStat.rmtco;
 }
 export async function download(dir:SFile,id:string){
     await sget(id,dir);

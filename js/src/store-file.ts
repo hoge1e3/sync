@@ -4,6 +4,7 @@ import { FileSystemFactory, SFile } from "@hoge1e3/sfile";
 import * as s from "./store.js";
 import { zip } from "./zip.js";
 import os from "os";
+import { ExcludeFunctionWithSubSync } from "./dot-sync.js";
 
 export type Data={url:string,__id__:string,__prev__?:string};
 export type NoIdData={url:string,__prev__?:string};
@@ -57,7 +58,7 @@ export async function data2dir(data:Data):Promise<SFile>{
     await zip.unzip(zipFile,extracted,{overwrite:true});
     return extracted;
 }
-export async function dir2data(dir:SFile,opt:{excludes:(f:SFile)=>boolean}):Promise<NoIdData>{
+export async function dir2data(dir:SFile,opt:{excludes:ExcludeFunctionWithSubSync}):Promise<NoIdData>{
     let ram=FS.get(tmpath);    
     let n=Math.floor(Math.random()*100000);
     let zipFile=ram.rel(n+".zip");

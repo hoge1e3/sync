@@ -2,11 +2,11 @@ import { SFile } from "@hoge1e3/sfile";
 import { Checkout } from "./store";
 
 export type DirInfo={lastUpdate:number};
-export type DirInfos={
+export type DirTree={
     [key:string]:DirInfo,
 };
 export type TreeData={
-    tree:DirInfos,
+    tree:DirTree,
     __id__:string,
 };
 export type Config={
@@ -25,35 +25,38 @@ export function find(dir:SFile):WorkDirStatus{
     const {repof,treef}=info;
     let {name,config}=repof.obj() as RepoData;
     let trdata=treef.obj() as TreeData;
-    let lcltree1=trdata.tree;
+    let treeOfLastCommit=trdata.tree;
     let __id__=trdata.__id__;
     return Object.assign(info,{
         name,
         __id__,// local __id__ of prev sync
-        lcltree1,//trdata.tree
+        treeOfLastCommit,//trdata.tree
     });
 }
 export type WorkDirStatus=WorkDir&{
     name:string,
     __id__:string,
-    lcltree1:DirInfos,
+    treeOfLastCommit:DirTree,
     rmtco?:Checkout
 };
+export type ExcludeFunctionWithSubSync=((f:SFile)=>boolean)&{subSyncs?:Set<string>};
 export type WorkDir={
+    isSubSync(f: SFile): boolean;
     repof:SFile,
     treef:SFile,
     dir:SFile,
     sync:SFile,
-    getExcludes():(f:SFile)=>boolean,
-    getLocalTree2():DirInfos,
-    getLocalTree1():DirInfos,
+    getExcludes():ExcludeFunctionWithSubSync,
+    getWorkingTree(writeSubSyncs?:boolean):DirTree,
+    //getLocalTree1():DirInfos,
     updateTree():void,
     getConfig():Config,
     writeRepo(obj:RepoData):void,
     readRepo():RepoData,
-    writeLocal(obj:TreeData):void,
-    readLocal():TreeData,
-    getDirInfo(_dir?:SFile):DirInfos,
+    writeTreeFile(obj:TreeData):void,
+    //writeSubSyncs():void,
+    readTreeFile():TreeData,
+    //getDirTree(_dir?:SFile):DirTree,
     init({name,__id__,config}:{name:string,__id__:string,config?:Config}):void,
     branch(newname:string):void,
 };
@@ -62,15 +65,11 @@ export function instance(dir: SFile):WorkDir{
     const repof=sync.rel(repon);
     const treef=sync.rel(treen);
     const syncignore=dir.rel(".syncignore");
+    const subSyncsFile=dir.rel(".subsyncs.json");
+    //let subSyncs=undefined as Set<string>|undefined;
     return {
-        /*
-        name,
-        __id__,// local __id__ of prev sync
-        //trdata,//local of prev sync
-        lcltree1,//trdata.tree
-        */
-
-        repof,treef,
+        repof,
+        treef,
         dir,
         sync,
         isSubSync(f:SFile){
@@ -83,19 +82,23 @@ export function instance(dir: SFile):WorkDir{
             ), ...(
                 syncignore.exists()?syncignore.lines():[]
             )].map(truncSEP);
-            const hasSync=(f:SFile)=>this.isSubSync(f);
-            return (f:SFile)=>hasSync(f)||excludePaths.some(e=>truncSEP(f.relPath(dir))==e);
-        },
-        getLocalTree2(){//local of current
-            return this.getDirInfo() as DirInfos;
-        },
-        getLocalTree1(){//local of last commit
-            return this.readLocal().tree;
+            const isSubSync=(f:SFile)=>this.isSubSync(f);
+            const subSyncs=new Set<string>();
+            const res:ExcludeFunctionWithSubSync=(f:SFile)=>{
+                const relPath=f.relPath(dir);
+                if (isSubSync(f)) {
+                    subSyncs.add(relPath);
+                    return true;
+                }
+                return excludePaths.some(e=>truncSEP(relPath)==e);
+            };
+            res.subSyncs=subSyncs;
+            return res;
         },
         updateTree(){
-            const lc=this.readLocal();
-            lc.tree=this.getLocalTree2();
-            this.writeLocal(lc);
+            const lc=this.readTreeFile();
+            lc.tree=this.getWorkingTree();
+            this.writeTreeFile(lc);
         },
         getConfig(){
             let {config}=this.readRepo();
@@ -107,18 +110,33 @@ export function instance(dir: SFile):WorkDir{
         readRepo(){
             return repof.obj() as RepoData;
         },
-        writeLocal(obj:TreeData){
+        writeTreeFile(obj:TreeData){
             treef.obj(obj);
         },
-        readLocal(){
+        readTreeFile(){
             return treef.obj() as TreeData;
         },
-        getDirInfo(_dir?:SFile){
-            _dir=_dir||dir;
-            return _dir.getDirTree({
+        getWorkingTree(writeSubSyncs=false){
+            const excludes=this.getExcludes();
+            const tree=dir.getDirTree({
                 style:"flat-relative",
-                excludes:this.getExcludes()
-            }) as DirInfos;
+                excludes,
+            }) as DirTree;
+            const subSyncs=excludes.subSyncs;
+            if (writeSubSyncs && subSyncs && 
+                (subSyncs.size>0||subSyncsFile.exists())
+            ) {
+                const data={} as {[key:string]:string};
+                for (let subSync of subSyncs) {
+                    let f=dir.rel(subSync);
+                    const w=instance(f);
+                    const id=w.readTreeFile().__id__;
+                    data[subSync]=id;
+                }
+                subSyncsFile.obj(data);
+                tree[subSyncsFile.relPath(dir)]={lastUpdate:subSyncsFile.lastUpdate()}
+            }
+            return tree;
         },
         init({name,__id__,config}:{name:string,__id__:string,config?:Config}){
             if(!sync.exists())sync.mkdir();
@@ -126,7 +144,7 @@ export function instance(dir: SFile):WorkDir{
                 name,config,
             });
             const tree={};
-            this.writeLocal({
+            this.writeTreeFile({
                 __id__,
                 tree,
             });

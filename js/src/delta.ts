@@ -1,6 +1,6 @@
 // acepad-sync-delta
 import {assert} from "chai";
-import { DirInfos } from "./dot-sync";
+import { DirTree } from "./dot-sync";
 
 type Delta={lastUpdate:number, deleted?:boolean, created?:boolean, modified?:boolean};
 type Deltas={[key:string]:Delta};
@@ -19,7 +19,7 @@ function unionKeys(...args:{[key:string]:any}[]) {
 function compZipTs(a:number,b:number){
     return Math.floor(a/2000)-Math.floor(b/2000);
 }
-export function getDelta(before:DirInfos,after:DirInfos) {
+export function getDelta(before:DirTree,after:DirTree) {
     assert.ok(before,"before");
     assert.ok(after,"after");
     
