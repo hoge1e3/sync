@@ -30,7 +30,13 @@ export async function $get(data = {}) {
         await showResponseBody(response);
         throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    return await response.json();
+    const text=await response.text();
+    try {
+        return JSON.parse(text);
+    }catch (e) {
+        console.log("non-json response", text);
+        throw e;
+    }   
 }
 async function showResponseBody(response:Response){
     console.log(await response.text());

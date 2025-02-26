@@ -1,5 +1,6 @@
 import { SFile } from "@hoge1e3/sfile";
 import { Checkout } from "./store";
+import exp from "constants";
 
 export type DirInfo={lastUpdate:number};
 export type DirTree={
@@ -15,6 +16,9 @@ export type Config={
 export type RepoData={
     name:string,
     config?:Config,
+};
+export type SubSyncEntry={
+    __id__: string,
 };
 // acepad-dot-sync
 export function find(dir:SFile):WorkDirStatus{
@@ -123,18 +127,23 @@ export function instance(dir: SFile):WorkDir{
                 excludes,
             }) as DirTree;
             const subSyncs=excludes.subSyncs;
-            if (writeSubSyncs && subSyncs && 
-                (subSyncs.size>0||subSyncsFile.exists())
-            ) {
-                const data={} as {[key:string]:string};
+            if (writeSubSyncs && subSyncs) {
+                const data=(subSyncsFile.exists()?subSyncsFile.obj():{}) as {[key:string]:SubSyncEntry};
+                let save=false;
                 for (let subSync of subSyncs) {
                     let f=dir.rel(subSync);
                     const w=instance(f);
-                    const id=w.readTreeFile().__id__;
-                    data[subSync]=id;
+                    const __id__=w.readTreeFile().__id__;
+                    if (!data[subSync]) {
+                        // TODO: which __id__ is newer??
+                        save=true;
+                        data[subSync]={__id__};
+                    }
                 }
-                subSyncsFile.obj(data);
-                tree[subSyncsFile.relPath(dir)]={lastUpdate:subSyncsFile.lastUpdate()}
+                if (save) {
+                    subSyncsFile.obj(data);
+                    tree[subSyncsFile.relPath(dir)]={lastUpdate:subSyncsFile.lastUpdate()}
+                }
             }
             return tree;
         },
