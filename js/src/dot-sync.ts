@@ -46,6 +46,7 @@ export type WorkDirStatus=WorkDir&{
 export type ExcludeFunctionWithSubSync=((f:SFile)=>boolean)&{subSyncs?:Set<string>};
 export type WorkDir={
     isSubSync(f: SFile): boolean;
+    inSubSync(f: SFile): boolean;
     repof:SFile,
     treef:SFile,
     dir:SFile,
@@ -64,7 +65,7 @@ export type WorkDir={
     init({name,__id__,config}:{name:string,__id__:string,config?:Config}):void,
     branch(newname:string):void,
 };
-export function instance(dir: SFile):WorkDir{
+export function instance(dir: SFile, inTmp=false):WorkDir{
     const sync=dir.rel(".sync/");
     const repof=sync.rel(repon);
     const treef=sync.rel(treen);
@@ -78,6 +79,13 @@ export function instance(dir: SFile):WorkDir{
         sync,
         isSubSync(f:SFile){
             return !f.equals(dir) && f.isDir() && f.rel(".sync/").exists();
+        },
+        inSubSync(f:SFile){
+            while(dir.contains(f)) {
+                if (this.isSubSync(f)) return true;
+                f=f.up()!;
+            }
+            return false;
         },
         getExcludes(){
             const truncSEP=((s:string)=>s.replace(/\/$/,""));
@@ -105,6 +113,8 @@ export function instance(dir: SFile):WorkDir{
             this.writeTreeFile(lc);
         },
         getConfig(){
+            // repof may not exist when downloaded into tmp dir, or checkout only subsync
+            if (!repof.exists()) return {excludes:[]};
             let {config}=this.readRepo();
             return config||{excludes:[]};
         },

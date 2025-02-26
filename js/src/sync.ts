@@ -85,20 +85,22 @@ export async function checkout(_dir:SFile){
     //console.log("dd",dd);
     for (let k in dd.downloads) {
         let d=dd.downloads[k];
-        let f=workDirStat.dir.rel(k);//.rm();
+        let wrkf=workDirStat.dir.rel(k);//.rm();
+        if (workDirStat.inSubSync(wrkf)) continue;
         if (d.deleted) {
-            console.log("del",f.path());
-            f.rm();
+            console.log("del",wrkf.path());
+            wrkf.rm();
         } else {
-            console.log("wrt",f.path());
+            console.log("wrt",wrkf.path());
             let r=remoteTree.dir.rel(k);
-            r.copyTo(f);
-            f.setMetaInfo(r.getMetaInfo());
+            r.copyTo(wrkf);
+            wrkf.setMetaInfo(r.getMetaInfo());
         }
     }
     let cfiles=[], emesg="";
     for (let k in dd.conflicts) {
         let wrkf=workDirStat.dir.rel(k);
+        if (workDirStat.inSubSync(wrkf)) continue;
         let rmtf=remoteTree.dir.rel(k);
         if(!rmtf.exists())continue;
         if(wrkf.exists()&&rmtf.text()===wrkf.text()){
@@ -159,7 +161,7 @@ export async function commit(_dir:SFile){
 }
 export async function data2tree(data:Data ,info: WorkDirStatus):Promise<TemporalRemoteDir>{
     let dir=await data2dir(data);
-    const tmpWorks=find(dir);
+    const tmpWorks=instance(dir, true);
     let tree=tmpWorks.getWorkingTree();//.getDirTree(dir);
     //console.log("data2tree", tree);
     if (!tree) {
