@@ -103,7 +103,7 @@ export async function checkout(_dir:SFile){
         if (workDirStat.inSubSync(wrkf)) continue;
         let rmtf=remoteTree.dir.rel(k);
         if(!rmtf.exists())continue;
-        if(wrkf.exists()&&rmtf.text()===wrkf.text()){
+        if(wrkf.exists()&&sameIgnoreCR(rmtf.text(), wrkf.text())){
             continue;
         }
         let cf=conflictFile(wrkf, remoteId);
@@ -120,6 +120,11 @@ export async function checkout(_dir:SFile){
         throw new ConfilictError(emesg, cfiles, remoteId);
     }
     return remoteId;
+}
+function sameIgnoreCR(a:string,b:string) {
+    a=a.replace(/\r/g,"");
+    b=b.replace(/\r/g,"");
+    return a===b;
 }
 export class ConfilictError extends Error{
     constructor(
