@@ -4,7 +4,7 @@ import {init,commit,checkout,clone,branch,downloadZip, chain,getBranchName} from
 
 export async function main(this:Shell, cmd:string, ...args:string[]){
     const sh=this;
-    const gd=()=>sh.resolve(args.shift()||sh.cwd);
+    const gd=()=>sh.resolve(args.shift()||sh.getcwd());
     const a=()=>{
         const r=args.shift();
         if (r==null) throw new Error("missing argument");
@@ -27,7 +27,7 @@ export async function main(this:Shell, cmd:string, ...args:string[]){
         case "chain":
             return console.log(await chain(a()));
         case "zip":
-            return await downloadZip(sh.resolve(sh.cwd), a());
+            return await downloadZip(sh.resolve(sh.getcwd()), a());
         case "show":
             return console.log(getBranchName(gd()));
         default:
