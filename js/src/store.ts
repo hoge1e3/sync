@@ -1,6 +1,5 @@
 // acepad-store
 
-import exp from "constants";
 import { Data, NoIdData } from "./store-file.js";
 export {setFS} from "./store-file.js";
 type PostResponse={id:string};
